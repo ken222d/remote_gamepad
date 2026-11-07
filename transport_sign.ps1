@@ -1,4 +1,4 @@
-# 手元の PC (Windows) で実行する。iPhone の入力を自宅の PC へ転送する
+﻿# 手元の PC (Windows) で実行する。iPhone の入力を自宅の PC へ転送する
 # 「管理者として実行」した PowerShell で:
 #   powershell -ExecutionPolicy Bypass -File .\transport_sign.ps1
 # 先に手元の PC で PC 用 Remote Gamepad ソフトを起動し、iPhone を接続しておく
