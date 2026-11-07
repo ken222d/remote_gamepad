@@ -5,3 +5,11 @@ __pycache__/
 .venv/
 venv/
 env/
+
+# エディタのスワップ・バックアップ (ユーザー名・ホスト名・パスが入る)
+*.swp
+*.swo
+*~
+
+# 個人の設定 (IP など)。見本は remote_gamepad.env.example
+remote_gamepad.env

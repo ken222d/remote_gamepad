@@ -10,6 +10,33 @@ colcon build --symlink-install --packages-select remote_gamepad
 source install/setup.bash
 ```
 
+## 起動スクリプトと個人の設定
+
+IP アドレスなどの個人の値は `remote_gamepad.env` に書く。このファイルは `.gitignore` 済みでコミットされない。
+クローンしたら見本からコピーして書き換える:
+
+```bash
+cp remote_gamepad.env.example remote_gamepad.env   # Windows: copy remote_gamepad.env.example remote_gamepad.env
+```
+
+| 設定 | 内容 |
+|---|---|
+| `IP` | 自宅の PC の Tailscale IP（自宅の PC で `tailscale ip -4`） |
+| `IPHONEIP` | iPhone の IP（iPhone の「設定 → Wi-Fi → (i)」） |
+| `NUMBER` | 転送に使う UDP ポート（既定 `40000`） |
+
+同名の環境変数があればそちらが優先される（例: `IPHONEIP=192.168.0.9 ./home_desktop_controll.sh`）。
+未設定や見本の `x.x.x.x` のままだと、スクリプトは設定方法を表示して止まる。
+
+| スクリプト | 実行する場所 | 使う設定 |
+|---|---|---|
+| `home_desktop_controll.sh` | 自宅の PC（iPhone と同じ Wi-Fi のとき） | `IPHONEIP` |
+| `remote_desktop_contoll.sh` | 自宅の PC（転送を受けるとき） | `NUMBER` |
+| `transport_sign.sh` | 手元の PC（Linux） | `IP`, `NUMBER`, `IPHONEIP` |
+| `transport_sign.ps1` | 手元の PC（Windows、管理者の PowerShell） | `IP`, `NUMBER`, `IPHONEIP` |
+
+`transport_sign.ps1` は `powershell -ExecutionPolicy Bypass -File .\transport_sign.ps1` で実行する。
+
 ## main_exec との関係
 
 **main_exec.launch.py には組み込んでいない。単独で起動する。**
