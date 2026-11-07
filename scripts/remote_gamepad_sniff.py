@@ -2,12 +2,13 @@
 """Remote Gamepad の通信内容を調べるためのパケットスニッファ。
 
 使い方:
-    sudo python3 tools/sniff.py [--src $IPHONEIP] [--seconds 60]
+    sudo python3 tools/sniff.py [--src 192.168.3.x] [--seconds 60]
 
 LAN 内の他ホスト (iPhone) からこの PC に届く UDP/TCP パケットを表示する。
 ポート番号やペイロードの形式を調べるために使う。
 """
 import argparse
+import os
 import socket
 import struct
 import time
@@ -15,7 +16,24 @@ from collections import Counter
 
 ETH_P_ALL = 0x0003
 IGNORE_PORTS = {22, 53, 5353, 1900, 41641}  # ssh, dns, mdns, ssdp, tailscale
-LOCAL_IPS = {"$IPHONEIP", "$IP"}
+
+
+
+def local_ips():
+    """この PC の IP (既定の経路の IP と、環境変数 IP の Tailscale IP)。"""
+    ips = set()
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+        try:
+            s.connect(("8.8.8.8", 80))  # UDP の connect は実際には送信しない
+            ips.add(s.getsockname()[0])
+        except OSError:
+            pass
+    if os.environ.get("IP"):
+        ips.add(os.environ["IP"])
+    return ips
+
+
+LOCAL_IPS = local_ips()
 
 
 def main():

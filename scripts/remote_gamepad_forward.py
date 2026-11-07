@@ -4,18 +4,21 @@
 手元の PC (iPhone と同じ Wi-Fi) で動かす。車両 PC とは Tailscale などの VPN でつなぐ。
 Linux と Windows で動く (WSL は不可。Windows の Python を使う)。
 
-    # 手元の PC: PC 用 Remote Gamepad ソフトを起動して iPhone を接続してから
-    sudo python3 remote_gamepad_forward.py --to $IP:$NUMBER   # Linux
-    python remote_gamepad_forward.py --to $IP:$NUMBER        # Windows (管理者)
+    # 手元の PC: 環境変数 IP (車両 PC の Tailscale IP) と IPHONEIP (iPhone の IP) を設定し、
+    # PC 用 Remote Gamepad ソフトを起動して iPhone を接続してから
+    sudo -E python3 remote_gamepad_forward.py   # Linux (-E で環境変数を sudo に渡す)
+    python remote_gamepad_forward.py            # Windows (管理者)
 
     # 車両 PC: ブリッジを listen モードで起動する
-    ros2 launch remote_gamepad remote_gamepad.launch.py mode:=listen port:=$NUMBER
+    ros2 launch remote_gamepad remote_gamepad.launch.py mode:=listen port:=47900
 
 - PC 用ソフトが受けたパケットを横から読む (sniff) ので、ソフトのポートが毎回変わってもよい
 - 届いた 19 バイトをそのまま送る。順序の入れ替わりや途切れの処理は車両側のブリッジが行う
 - 標準ライブラリだけで動く単体のファイル (手元の PC に ROS は不要)
+- --to の既定は $IP:47900、--src の既定は $IPHONEIP
 """
 import argparse
+import os
 import select
 import socket
 import struct
@@ -26,6 +29,7 @@ import time
 # bridge は Linux 専用 (fcntl, uinput) で Windows では import できないので、ここに持つ
 PKT_LEN = 19
 PKT_HDR = bytes([0x13, 0x00, 0x01, 0x15])
+DEFAULT_PORT = 47900
 
 
 def udp_payload_from_ip(ip):
@@ -76,12 +80,17 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0],
                                  formatter_class=argparse.RawDescriptionHelpFormatter,
                                  epilog="\n".join(__doc__.splitlines()[1:]))
-    ap.add_argument("--to", type=parse_host_port, required=True,
-                    help="転送先 (車両 PC) の HOST:PORT。")
-    ap.add_argument("--src", help="この送信元 IP (iPhone) からのパケットだけ転送する")
+    env_ip = os.environ.get("IP")
+    ap.add_argument("--to", type=parse_host_port,
+                    default=(env_ip, DEFAULT_PORT) if env_ip else None,
+                    help=f"転送先 (車両 PC) の HOST:PORT (既定: $IP:{DEFAULT_PORT})")
+    ap.add_argument("--src", default=os.environ.get("IPHONEIP") or None,
+                    help="この送信元 IP (iPhone) からのパケットだけ転送する (既定: $IPHONEIP)")
     ap.add_argument("--bind", help="Windows のみ: 読むインターフェースの IP (既定: Wi-Fi 側を自動)")
     ap.add_argument("-v", "--verbose", action="store_true", help="1 秒ごとに転送数を表示")
     args = ap.parse_args()
+    if args.to is None:
+        ap.error("転送先がありません。環境変数 IP を設定するか --to HOST:PORT を指定してください")
 
     me = args.bind or local_ip()
     try:
@@ -92,7 +101,8 @@ def main():
         sys.exit(f"生パケットを受信できません ({e})。"
                  "Windows では管理者で実行し、--bind に Wi-Fi の IP を指定してください。")
     tx = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    print(f"forwarding Remote Gamepad packets ({me}) -> {args.to[0]}:{args.to[1]}", flush=True)
+    print(f"forwarding Remote Gamepad packets ({me}"
+          f"{', from ' + args.src if args.src else ''}) -> {args.to[0]}:{args.to[1]}", flush=True)
 
     peer, count, last_report = None, 0, time.monotonic()
     try:

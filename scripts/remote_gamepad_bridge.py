@@ -10,7 +10,7 @@ UDP で届く入力を Linux の仮想ゲームパッドとして流すので、
     ros2 run joy joy_node --ros-args -p device_name:="Remote Gamepad ROS"
 
     # listen モード: PC 用ソフトなしで、指定ポートを自分で受信する
-    sudo python3 remote_gamepad_bridge.py --mode listen --port $NUMBER
+    sudo python3 remote_gamepad_bridge.py --mode listen --port 47841
 
 パケット形式 (19 bytes, little endian, 実測から解析):
     [0]    0x13 (長さ)        [1:4] 00 01 15 (ヘッダ)
