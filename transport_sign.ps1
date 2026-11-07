@@ -8,7 +8,8 @@
 $Config = Join-Path $PSScriptRoot "remote_gamepad.env"
 $Settings = @{}
 if (Test-Path $Config) {
-    foreach ($line in Get-Content $Config) {
+    # -Encoding UTF8: Windows PowerShell 5.1 は既定で Shift-JIS として読み、日本語のコメントが次の行を巻き込む
+    foreach ($line in Get-Content $Config -Encoding UTF8) {
         if ($line -match '^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*"?([^"]*?)"?\s*$') {
             $Settings[$Matches[1]] = $Matches[2]
         }
