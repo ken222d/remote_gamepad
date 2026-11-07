@@ -36,6 +36,7 @@ cp remote_gamepad.env.example remote_gamepad.env   # Windows: copy remote_gamepa
 | `transport_sign.ps1` | 手元の PC（Windows、管理者の PowerShell） | `IP`, `NUMBER`, `IPHONEIP` |
 
 `transport_sign.ps1` は `powershell -ExecutionPolicy Bypass -File .\transport_sign.ps1` で実行する。
+**`transport_sign.ps1` には日本語を書かないこと**（ASCII のみ）。Windows PowerShell 5.1 は BOM なしのファイルを Shift-JIS として読むため、日本語があると構文エラーになる。
 
 ## main_exec との関係
 
